@@ -13,15 +13,15 @@ import com.epam.esc.bean.{Manifest, ManifestJsonSupport}
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-object Client extends ManifestJsonSupport {
+class Client()(
+  implicit val system: ActorSystem,
+  implicit val materializer: ActorMaterializer,
+  implicit val executionContext: ExecutionContextExecutor
+) extends ManifestJsonSupport {
 
   val nasaApiUrl = "https://api.nasa.gov/mars-photos/api/v1"
   val key = "6b61IprIJxLY1GkdDcKKIq3BMb6DQtBH1krnhxe3"
   val rover = "curiosity"
-
-  implicit val system: ActorSystem = ActorSystem()
-  implicit val materializer: ActorMaterializer = ActorMaterializer()
-  implicit val executionContext: ExecutionContextExecutor = system.dispatcher
 
   def main(args: Array[String]): Unit = {
 
