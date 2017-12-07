@@ -42,7 +42,7 @@ class Client()(
     }
   }
 
-  def getLastPhoto(rover: String, sol: Int, camera: String): Future[String] = {
+  def getPhoto(rover: String, sol: Int, camera: String): Future[String] = {
     val uri = s"$nasaApiUrl/rovers/$rover/photos?sol=$sol&camera=$camera&api_key=$key"
     val responseFuture: Future[HttpResponse] =
       Http().singleRequest(HttpRequest(uri = uri))

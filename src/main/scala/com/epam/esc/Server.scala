@@ -3,11 +3,11 @@ package com.epam.esc
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.{HttpApp, Route}
 import akka.stream.ActorMaterializer
-import com.epam.esc.bean.InfoJsonSupport
+import com.epam.esc.bean.{InfoJsonSupport, PhotoJsonSupport, PhotoRequest, PhotoResponse}
 
 import scala.concurrent.ExecutionContextExecutor
 
-object Server extends HttpApp with InfoJsonSupport {
+object Server extends HttpApp with InfoJsonSupport with PhotoJsonSupport {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -21,7 +21,16 @@ object Server extends HttpApp with InfoJsonSupport {
         complete(client.getManifest(rover))
       }
     }
-  }
+  } ~
+    path("photo") {
+      post {
+        entity(as[PhotoRequest]) { photoRequest=>
+          complete(client.getPhoto(photoRequest.rover, photoRequest.sol, photoRequest.camera).map{ url =>
+            PhotoResponse(url)
+          })
+        }
+      }
+    }
 
   def main(args: Array[String]) = {
     Server.startServer("localhost", 8080)
