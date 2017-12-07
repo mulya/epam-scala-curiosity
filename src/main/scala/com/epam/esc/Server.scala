@@ -1,15 +1,13 @@
 package com.epam.esc
 
 import akka.actor.ActorSystem
-import akka.event.Logging
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.server.{HttpApp, Route}
+import akka.http.scaladsl.server.HttpApp
 import akka.stream.ActorMaterializer
-import com.epam.esc.bean.{InfoJsonSupport, PhotoJsonSupport, PhotoRequest, PhotoResponse}
+import com.epam.esc.bean._
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
-object Server extends HttpApp with InfoJsonSupport with PhotoJsonSupport {
+object Server extends HttpApp with Routing {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -17,34 +15,15 @@ object Server extends HttpApp with InfoJsonSupport with PhotoJsonSupport {
 
   val client = new Client()
 
-  override protected def routes: Route = path("info") {
-    logRequest(("info-get", Logging.InfoLevel)) {
-      get {
-        parameter("rover") { rover =>
-          complete(client.getManifest(rover))
-        }
-      }
-    }
-  } ~
-    path("photo") {
-      post {
-        entity(as[PhotoRequest]) { photoRequest=>
-          complete(client.getPhoto(photoRequest.rover, photoRequest.sol, photoRequest.camera).map{ url =>
-            PhotoResponse(url)
-          })
-        }
-      } ~
-      get {
-        parameter("rover", "sol".as[Int], "camera") { (rover, sol, camera) =>
-          complete(client.getPhoto(rover, sol, camera).map{ url =>
-            HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<img src='$url'>")
-          })
-        }
-      }
-    }
-
   def main(args: Array[String]) = {
     Server.startServer("localhost", 8080)
   }
 
+  override protected def getManifest(rover: String): Future[Info] = {
+    client.getManifest(rover)
+  }
+
+  override protected def getPhoto(rover: String, sol: Int, camera: String): Future[String] = {
+    client.getPhoto(rover, sol, camera)
+  }
 }
