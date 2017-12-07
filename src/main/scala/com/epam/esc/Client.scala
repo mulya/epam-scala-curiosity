@@ -25,9 +25,11 @@ object Client extends ManifestJsonSupport {
 
   def main(args: Array[String]): Unit = {
 
-    getManifest().onComplete{
-      case Success(m: Manifest) =>
-        println(m.photo_manifest.photos.maxBy(_.sol))
+    getManifest().flatMap{ manifest =>
+      getLastPhoto(manifest)
+    }.onComplete{
+      case Success(url: String) =>
+        println(url)
       case Failure(e) =>
         println("Failure: " + e)
     }
@@ -41,6 +43,24 @@ object Client extends ManifestJsonSupport {
     responseFuture.flatMap { res: HttpResponse =>
       res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
         body.decodeString(Charset.defaultCharset()).parseJson.convertTo[Manifest]
+      }
+    }
+  }
+
+  def getLastPhoto(manifest: Manifest): Future[String] = {
+    val photoSol = manifest.photo_manifest.photos.maxBy(_.sol)
+    val uri = s"$nasaApiUrl/rovers/$rover/photos?sol=${photoSol.sol}&camera=${photoSol.cameras.head}&api_key=$key"
+    val responseFuture: Future[HttpResponse] =
+      Http().singleRequest(HttpRequest(uri = uri))
+
+    responseFuture.flatMap { res: HttpResponse =>
+      res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
+        body.decodeString(Charset.defaultCharset()).parseJson
+          .asJsObject.fields("photos")
+          .asInstanceOf[JsArray].elements.head
+          .asJsObject.fields("img_src")
+          .asInstanceOf[JsString]
+          .value
       }
     }
   }
