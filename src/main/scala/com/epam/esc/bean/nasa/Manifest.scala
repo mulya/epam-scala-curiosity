@@ -1,4 +1,4 @@
-package com.epam.esc.bean
+package com.epam.esc.bean.nasa
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.DefaultJsonProtocol

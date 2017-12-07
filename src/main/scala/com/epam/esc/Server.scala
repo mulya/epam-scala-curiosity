@@ -3,10 +3,11 @@ package com.epam.esc
 import akka.actor.ActorSystem
 import akka.http.scaladsl.server.{HttpApp, Route}
 import akka.stream.ActorMaterializer
+import com.epam.esc.bean.InfoJsonSupport
 
 import scala.concurrent.ExecutionContextExecutor
 
-object Server extends HttpApp {
+object Server extends HttpApp with InfoJsonSupport {
 
   implicit val system: ActorSystem = ActorSystem()
   implicit val materializer: ActorMaterializer = ActorMaterializer()
@@ -14,12 +15,11 @@ object Server extends HttpApp {
 
   val client = new Client()
 
-  override protected def routes: Route = pathSingleSlash {
+  override protected def routes: Route = path("info") {
     get {
-      val urlFuture = client.getManifest().flatMap{ manifest =>
-        client.getLastPhoto(manifest)
+      parameter("rover") { rover =>
+        complete(client.getManifest(rover))
       }
-      complete(urlFuture)
     }
   }
 
