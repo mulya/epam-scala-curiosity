@@ -2,6 +2,7 @@ package com.epam.esc
 
 import akka.actor.ActorSystem
 import akka.event.Logging
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.{HttpApp, Route}
 import akka.stream.ActorMaterializer
 import com.epam.esc.bean.{InfoJsonSupport, PhotoJsonSupport, PhotoRequest, PhotoResponse}
@@ -30,6 +31,13 @@ object Server extends HttpApp with InfoJsonSupport with PhotoJsonSupport {
         entity(as[PhotoRequest]) { photoRequest=>
           complete(client.getPhoto(photoRequest.rover, photoRequest.sol, photoRequest.camera).map{ url =>
             PhotoResponse(url)
+          })
+        }
+      } ~
+      get {
+        parameter("rover", "sol".as[Int], "camera") { (rover, sol, camera) =>
+          complete(client.getPhoto(rover, sol, camera).map{ url =>
+            HttpEntity(ContentTypes.`text/html(UTF-8)`, s"<img src='$url'>")
           })
         }
       }
